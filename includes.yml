@@ -1,0 +1,13 @@
+statements:
+  api:
+    - url: 'https://github.com/molizz/xxxx/releases/download/v{{version}}/v{{version}}.tar.gz'
+  web:
+    - url: 'https://github.com/molizz/hello/releases/download/v{{version}}/v{{version}}.tar.gz'
+
+v1.0:
+  - api: v1.0
+  - web: v2.0
+
+v2.0:
+  - api: v2.0
+  - web: v3.0
