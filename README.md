@@ -9,7 +9,7 @@
 inclus version v2.0
 ```
 
-下载 v2.0 版本的所有依赖, 指定配置文件 includes.yml:
+下载 v2.0 版本的所有依赖, 指定配置文件 includes.yml:
 ```
 inclus version v2.0 includes.yml
 ```
