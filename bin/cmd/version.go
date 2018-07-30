@@ -139,9 +139,11 @@ func download(urls []*Download) error {
 		}(u)
 	}
 
+	fmt.Println("downloading...")
+
 	wg.Wait()
 
-	fmt.Println("done~ bye.")
+	fmt.Println("done... bye.")
 
 	return nil
 }
