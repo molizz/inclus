@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 
@@ -21,6 +25,11 @@ var (
 	definitions = make(map[string]interface{})
 	versions    = make(map[string]interface{})
 )
+
+type Download struct {
+	name string
+	url  string
+}
 
 type Command struct {
 	version string
@@ -50,7 +59,7 @@ func initConfig(c *Command) error {
 	return nil
 }
 
-func buildDownloads(ver string) ([]string, error) {
+func buildDownloads(ver string) ([]*Download, error) {
 	version, ok := versions[ver]
 	if !ok {
 		return nil, errors.New("not found " + ver)
@@ -60,22 +69,80 @@ func buildDownloads(ver string) ([]string, error) {
 	versionsMap := version.(map[string]interface{})
 
 	// build url
-	downloads := make([]string, 0)
+	downloads := make([]*Download, 0)
 
 	for defName, verName := range versionsMap {
 		defKeyMap, ok := definitions[defName].(map[string]interface{})
 		if !ok {
 			return nil, errors.New("wrong format")
 		}
-		url := defKeyMap["url"].(string)
-		url = strings.Replace(url, "{{version}}", verName.(string), -1)
-		downloads = append(downloads, url)
+		durl := defKeyMap["url"].(string)
+		durl = strings.Replace(durl, "{{version}}", verName.(string), -1)
+
+		name, ok := defKeyMap["filename"].(string)
+		if !ok {
+			urls := strings.Split(durl, "/")
+			if len(urls) > 0 {
+				name = urls[len(urls)-1]
+			}
+		}
+
+		downloads = append(downloads, &Download{
+			url:  durl,
+			name: name,
+		})
 	}
 
 	return downloads, nil
 }
 
-func download(urls []string) error {
+func download(urls []*Download) error {
+	if len(urls) == 0 {
+		return errors.New("urls is null.")
+	}
+
+	downloadFunc := func(download *Download) error {
+		httpClient := http.Client{
+			Timeout: 30 * time.Second,
+		}
+
+		resp, err := httpClient.Get(download.url)
+		if err != nil {
+			fmt.Println("url: ", download.url)
+			return err
+		}
+		defer resp.Body.Close()
+
+		file, err := os.OpenFile(download.name, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		_, err = io.Copy(file, resp.Body)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	var wg sync.WaitGroup
+	for _, u := range urls {
+		wg.Add(1)
+		go func(durl *Download) {
+			defer wg.Done()
+			err := downloadFunc(durl)
+			if err != nil {
+				fmt.Println("downloading error:", err, " url: ", durl.url)
+			}
+		}(u)
+	}
+
+	wg.Wait()
+
+	fmt.Println("done~ bye.")
+
 	return nil
 }
 

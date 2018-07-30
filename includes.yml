@@ -1,8 +1,10 @@
 definitions:
   api:
     url: 'https://github.com/molizz/xxxx/releases/download/v{{version}}/v{{version}}.tar.gz'
+    filename: 'hello.tar.gz'
   web:
     url: 'https://github.com/molizz/hello/releases/download/v{{version}}/v{{version}}.tar.gz'
+    filename: 'web-hello.tar.gz'
 
 versions:
   v1.0:
