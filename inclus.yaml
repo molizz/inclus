@@ -1,3 +1,11 @@
+repository:
+  # inclus commit 可以将inclus.yml提交到该仓库
+  # 在 https://github.com/settings/tokens/new 新增 access token. 需要 repo:repo_deployment 权限
+  giturl: https://github.com/molizz/inclus
+  gitbranch: master
+  gitpath: /inclus.yaml
+  token: dd0ce488489d5c67843153648c2be820b836eb
+
 definitions:
   api:
     url: 'https://github.com/molizz/xxxx/releases/download/v{{version}}/v{{version}}.tar.gz'

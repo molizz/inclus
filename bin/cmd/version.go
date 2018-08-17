@@ -1,24 +1,16 @@
 package cmd
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/spf13/cobra"
-)
-
-const (
-	DefConfigName = "includes.yml"
 )
 
 var (
@@ -32,31 +24,45 @@ type Download struct {
 }
 
 type Command struct {
-	version string
-	config  string
+	version    string
+	configPath string
 }
 
-func initConfig(c *Command) error {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
+func init() {
+	RootCmd.AddCommand(versionCmd)
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version VERSION_NAME [CONFIG]",
+	Short: "传入版本号",
+	Long:  "传入配置文件, 默认使用当前目录的 " + ConfigName,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		config, err := prepareVersion(args...)
+		if err != nil {
+			return err
 		}
-	}()
 
-	viper.SetConfigType("yaml")
-	body, err := ioutil.ReadFile(c.config)
-	if err != nil {
-		return err
-	}
+		err = readVersionConfig(config)
+		if err != nil {
+			return err
+		}
 
-	err = viper.ReadConfig(bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
+		urls, err := buildDownloads(config.version)
+		if err != nil {
+			return err
+		}
 
-	definitions = viper.Get("definitions").(map[string]interface{})
-	versions = viper.Get("versions").(map[string]interface{})
-	return nil
+		if len(urls) == 0 {
+			return errors.New("Not match download url.")
+		}
+
+		err = download(urls)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	},
 }
 
 func buildDownloads(ver string) ([]*Download, error) {
@@ -136,85 +142,46 @@ func download(urls []*Download) error {
 			if err != nil {
 				fmt.Println("downloading error:", err, " url: ", durl.url)
 			}
+			fmt.Println("file ", durl.name, " is down.")
 		}(u)
 	}
 
 	fmt.Println("downloading...")
 
 	wg.Wait()
-
-	fmt.Println("done... bye.")
-
+	fmt.Println("done... bye...")
 	return nil
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version VERSION_NAME CONFIG",
-	Short: "传入版本号",
-	Long:  "传入配置文件, 默认使用当前目录的includes.yml",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		err := verify(args...)
-		if err != nil {
-			return err
-		}
+func prepareVersion(args ...string) (*Command, error) {
+	if len(args) == 0 {
+		return nil, errors.New("version is not set.")
+	}
 
-		c := prepare(args...)
-		err = initConfig(c)
-		if err != nil {
-			return err
-		}
-
-		urls, err := buildDownloads(c.version)
-		if err != nil {
-			return err
-		}
-
-		if len(urls) == 0 {
-			return errors.New("Not match download url.")
-		}
-
-		err = download(urls)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	},
-}
-
-func prepare(args ...string) *Command {
 	c := &Command{}
 	c.version = args[0]
 	if len(args) >= 2 {
-		c.config = args[1]
+		c.configPath = args[1]
 	} else {
-		c.config = DefConfigName
+		c.configPath = ConfigName
 	}
-	return c
+	return c, nil
 }
 
-func verify(args ...string) error {
-	if len(args) == 0 {
-		return errors.New("version is not set.")
+func readVersionConfig(c *Command) error {
+
+	// 判断默认配置文件
+	if !fileExist(c.configPath) {
+		return ErrConfigNotFount
 	}
 
-	existFunc := func(path string) error {
-		configInfo, err := os.Stat(path)
-		if os.IsNotExist(err) || configInfo.IsDir() {
-			return errors.New("config file is not exist.")
-		}
-		return nil
-	}
-
-	if len(args) < 2 {
-		err := existFunc(DefConfigName)
+	vp, err := GetViper(c.configPath)
+	if err != nil {
 		return err
 	}
 
-	err := existFunc(args[1])
-	return err
-}
+	definitions = vp.Get("definitions").(map[string]interface{})
+	versions = vp.Get("versions").(map[string]interface{})
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
+	return nil
 }
