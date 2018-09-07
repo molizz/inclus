@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	ConfigName = "inclus.yaml"
+	ConfigFile     = "inclus.yaml"
+	GenVerionsFile = "versions.yaml"
 )
 
 var (
-	ErrConfigNotFount = errors.New("config file is not found")
+	ErrConfigNotFount = errors.New("inclus file is not found")
 )
 
 var RootCmd = &cobra.Command{
-	Use:   "inclus version v2.0 " + ConfigName,
+	Use:   "inclus -g web v2.0 app v3.0",
 	Short: "版本依赖管理工具",
 	Long:  `版本依赖管理工具`,
 }

@@ -1,0 +1,13 @@
+versions:
+  v1.0:
+    api: v1.0
+    web: v2.0
+    a: 3123
+
+  v2.0:
+    api: v2.0
+    web: v3.0
+
+  v3.0.200:
+    api: v3.0
+    web: v3.1_huya

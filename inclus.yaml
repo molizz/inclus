@@ -1,24 +1,15 @@
-repository:
+upload:
   # inclus commit 可以将inclus.yml提交到该仓库
   # 在 https://github.com/settings/tokens/new 新增 access token. 需要 repo:repo_deployment 权限
-  giturl: https://github.com/molizz/inclus
-  gitbranch: master
-  gitpath: /inclus.yaml
-  token: dd0ce488489d5c67843153648c2be820b836eb
+  git_push_url: https://github.com/molizz/inclus
+  git_branch: master
+  git_push_to: /inclus.yaml
+
+
+# 仓库的默认clone地址
+clone_dir: /Users/moli/go-project/src/github.com/molizz/inclus/repository
 
 definitions:
-  api:
-    url: 'https://github.com/molizz/xxxx/releases/download/v{{version}}/v{{version}}.tar.gz'
-    filename: 'hello.tar.gz'
-  web:
-    url: 'https://github.com/molizz/hello/releases/download/v{{version}}/v{{version}}.tar.gz'
-    filename: 'web-hello.tar.gz'
+  api: 'git@github.com:BangWork/bang-api.git'
+  web: 'git@github.com:BangWork/bang-api.git'
 
-versions:
-  v1.0:
-    api: v1.0
-    web: v2.0
-
-  v2.0:
-    api: v2.0
-    web: v3.0

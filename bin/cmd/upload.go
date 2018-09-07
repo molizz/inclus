@@ -2,18 +2,18 @@ package cmd
 
 import (
 	"context"
-	"errors"
-	"net/http"
-	"time"
-
 	"crypto/sha1"
 	"encoding/base64"
+	"errors"
 	"fmt"
-	"github.com/google/go-github/github"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/google/go-github/github"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -26,14 +26,6 @@ var (
 
 // 目前只支持github
 
-type Commit struct {
-	gitUrl     string
-	gitBranch  string
-	gitToken   string
-	gitPath    string
-	configPath string
-}
-
 func init() {
 	RootCmd.AddCommand(commitCmd)
 }
@@ -41,7 +33,7 @@ func init() {
 var commitCmd = &cobra.Command{
 	Use:   "commit [CONFIG]",
 	Short: "传入版本号",
-	Long:  "传入配置文件, 默认使用当前目录的 " + ConfigName,
+	Long:  "传入配置文件, 默认使用当前目录的 " + ConfigFile,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config, err := prepareCommit(args...)
 		if err != nil {
@@ -61,7 +53,7 @@ var commitCmd = &cobra.Command{
 	},
 }
 
-func push(c *Commit) error {
+func push(c *Upload) error {
 	client := http.DefaultClient
 	client.Timeout = clientTimeout
 	client.Transport = &github.BasicAuthTransport{
@@ -121,7 +113,7 @@ func encodeBase64(src []byte) (dst []byte, err error) {
 	return
 }
 
-func (c *Commit) commitContent() ([]byte, error) {
+func (c *Upload) commitContent() ([]byte, error) {
 	content, err := ioutil.ReadFile(c.configPath)
 	if err != nil {
 		return nil, err
@@ -146,12 +138,12 @@ func ownerAndPath(gitUrl string) (owner *string, repo *string, err error) {
 	return
 }
 
-func prepareCommit(args ...string) (*Commit, error) {
-	c := &Commit{}
+func prepareCommit(args ...string) (*Upload, error) {
+	c := &Upload{}
 	if len(args) > 0 {
 		c.configPath = args[0]
 	} else {
-		c.configPath = ConfigName
+		c.configPath = ConfigFile
 	}
 
 	v, err := GetViper(c.configPath)
@@ -184,7 +176,7 @@ func prepareCommit(args ...string) (*Commit, error) {
 	return c, nil
 }
 
-func verifyCommit(c *Commit) error {
+func verifyCommit(c *Upload) error {
 	if !fileExist(c.configPath) {
 		return ErrConfigNotFount
 	}

@@ -8,6 +8,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Upload struct {
+	PushURL string `yaml:"push_url"`
+	Branch  string `yaml:"branch"`
+	Path    string `yaml:"push_to"`
+}
+type Inclus struct {
+	Upload      Upload            `yaml:"upload"`
+	CloneDir    string            `yaml:"clone_dir"`
+	Definitions map[string]string `yaml:"definitions"`
+}
+
 func GetViper(cfgPath string) (*viper.Viper, error) {
 	versionCfg := viper.New()
 	versionCfg.SetConfigType("yaml")

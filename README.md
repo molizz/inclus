@@ -1,38 +1,29 @@
+##
+
+2018-09-14 日之前完成
+
 ## inclus
 
 自动下载inclus.yaml中包含的版本及相关依赖软件
 
-## 使用
+同时生成versions.yaml文件
 
-### 下载
-
-下载 v2.0 版本的所有依赖(默认从当前命令程序路径读取 inclus.yaml 文件):
-```
-inclus version v2.0
-```
-
-下载 v2.0 版本的所有依赖, 指定配置文件 inclus.yaml:
-```
-inclus version v2.0 inclus.yaml
-```
-
-
-### 提交inclus.yaml
-
-将inclus.yaml提交到仓库中.
-
-需要在 https://github.com/settings/tokens/new 新增 access token. 至少需要 repo:repo_deployment 权限
-
-配置好后, 通过命令
+### 使用
 
 ```
-inclus commit
+export github token
+
+inclus g api v1.0.1 web v2.0 wiki v3.0
+
+result api 1000 web 500 wiki 1100
+
+v100.500.1100
+
 ```
 
-将inclus.yaml提交到仓库
 
-或指定配置文件
+### 上传versions.yaml
 
-```
-inclus commit inclus.yaml
-```
+TOKEN=xxxxxx inclus u
+
+将上传到github, token为github的密钥
