@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
@@ -9,13 +10,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/molizz/inclus/bin/utils"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type Upload struct {
@@ -41,7 +42,7 @@ func init() {
 }
 
 var commitCmd = &cobra.Command{
-	Use:   "commit [CONFIG]",
+	Use:   "u",
 	Short: "传入版本号",
 	Long:  "传入配置文件, 默认使用当前目录的 " + ConfigFile,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,40 +65,48 @@ var commitCmd = &cobra.Command{
 }
 
 func push(c *Upload) error {
-	client := http.DefaultClient
-	client.Timeout = clientTimeout
-	client.Transport = &github.BasicAuthTransport{
-		Username: c.GithubToken,
-		Password: c.GithubToken,
-	}
-
 	owner, repo, err := ownerAndPath(c.PushURL)
 	if err != nil {
 		return err
 	}
 
-	var message = "from inclus"
+	client := http.DefaultClient
+	client.Timeout = clientTimeout
+	client.Transport = &github.BasicAuthTransport{
+		Username: *owner,
+		Password: c.GithubToken,
+	}
+
+	var message = fmt.Sprintf("%s from inclus.", time.Now().Format(time.RFC3339))
 	content, err := c.commitContent()
 	if err != nil {
 		return err
 	}
-	contentEncode, err := encodeBase64(content)
-	if err != nil {
-		return err
-	}
+	// contentEncode, err := encodeBase64(content)
+	// if err != nil {
+	// 	return err
+	// }
+
+	var shaBuff bytes.Buffer
+	shaBuff.Write([]byte("blob"))
+	shaBuff.Write([]byte(fmt.Sprintf(" %d", len(content))))
+	shaBuff.Write([]byte{0})
+	shaBuff.Write(content)
 
 	sha := sha1.New()
-	sha.Write(content)
+	sha.Write(shaBuff.Bytes())
 	shaString := fmt.Sprintf("%x", sha.Sum(nil))
 
 	// github.CommitAuthor{}
 
 	opt := &github.RepositoryContentFileOptions{
 		Message: &message,
-		Content: contentEncode,
+		Content: content,
 		SHA:     &shaString,
 		Branch:  &c.Branch,
 	}
+
+	fmt.Println(*opt.Message, *opt.SHA)
 
 	gh := github.NewClient(client)
 	_, resp, err := gh.Repositories.UpdateFile(ctx, *owner, *repo, c.Path, opt)
@@ -105,7 +114,8 @@ func push(c *Upload) error {
 		return err
 	}
 
-	if resp.StatusCode == 200 {
+	if resp.StatusCode/100 == 2 {
+		fmt.Println("更新成功.")
 		return nil
 	} else {
 		return errors.New(resp.Status)
@@ -164,18 +174,18 @@ func prepareCommit(args ...string) (*Upload, error) {
 	}
 
 	var ok bool
-	repository := v.Get("repository").(map[string]interface{})
-	c.PushURL, ok = repository["giturl"].(string)
+	repository := v.Get("upload").(map[string]interface{})
+	c.PushURL, ok = repository["push_url"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository url")
 	}
 
-	c.Branch, ok = repository["gitbranch"].(string)
+	c.Branch, ok = repository["branch"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository branch")
 	}
 
-	c.Path, ok = repository["gitpath"].(string)
+	c.Path, ok = repository["path"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository gitpath")
 	}

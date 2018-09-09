@@ -10,20 +10,16 @@
 
 ### 使用
 
+#### 生成versions.yaml
 ```
-export github token
-
 inclus g api v1.0.1 web v2.0 wiki v3.0
-
-result api 1000 web 500 wiki 1100
-
-v100.500.1100
-
 ```
 
 
-### 上传versions.yaml
+#### 上传versions.yaml
 
+```
 TOKEN=xxxxxx inclus u
+```
 
 将上传到github, token为github的密钥

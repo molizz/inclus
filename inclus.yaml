@@ -12,4 +12,3 @@ clone_dir: /Users/moli/go-project/src/github.com/molizz/inclus/repository
 definitions:
   api: 'git@github.com:molizz/nddos.git'
   web: 'git@github.com:molizz/grack.git'
-
