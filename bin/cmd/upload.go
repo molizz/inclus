@@ -13,8 +13,18 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/molizz/inclus/bin/utils"
 	"github.com/spf13/cobra"
+	"os"
 )
+
+type Upload struct {
+	PushURL string `yaml:"push_url"`
+	Branch  string `yaml:"branch"`
+	Path    string `yaml:"push_to"`
+
+	GithubToken string
+}
 
 const (
 	clientTimeout = 10 * time.Second
@@ -57,11 +67,11 @@ func push(c *Upload) error {
 	client := http.DefaultClient
 	client.Timeout = clientTimeout
 	client.Transport = &github.BasicAuthTransport{
-		Username: c.gitToken,
-		Password: c.gitToken,
+		Username: c.GithubToken,
+		Password: c.GithubToken,
 	}
 
-	owner, repo, err := ownerAndPath(c.gitUrl)
+	owner, repo, err := ownerAndPath(c.PushURL)
 	if err != nil {
 		return err
 	}
@@ -86,11 +96,11 @@ func push(c *Upload) error {
 		Message: &message,
 		Content: contentEncode,
 		SHA:     &shaString,
-		Branch:  &c.gitBranch,
+		Branch:  &c.Branch,
 	}
 
 	gh := github.NewClient(client)
-	_, resp, err := gh.Repositories.UpdateFile(ctx, *owner, *repo, c.gitPath, opt)
+	_, resp, err := gh.Repositories.UpdateFile(ctx, *owner, *repo, c.Path, opt)
 	if err != nil {
 		return err
 	}
@@ -114,7 +124,7 @@ func encodeBase64(src []byte) (dst []byte, err error) {
 }
 
 func (c *Upload) commitContent() ([]byte, error) {
-	content, err := ioutil.ReadFile(c.configPath)
+	content, err := ioutil.ReadFile(c.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -141,34 +151,36 @@ func ownerAndPath(gitUrl string) (owner *string, repo *string, err error) {
 func prepareCommit(args ...string) (*Upload, error) {
 	c := &Upload{}
 	if len(args) > 0 {
-		c.configPath = args[0]
+		c.Path = args[0]
 	} else {
-		c.configPath = ConfigFile
+		c.Path = ConfigFile
 	}
 
-	v, err := GetViper(c.configPath)
+	c.GithubToken = os.Getenv("TOKEN")
+
+	v, err := utils.GetViper(c.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	var ok bool
 	repository := v.Get("repository").(map[string]interface{})
-	c.gitUrl, ok = repository["giturl"].(string)
+	c.PushURL, ok = repository["giturl"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository url")
 	}
 
-	c.gitBranch, ok = repository["gitbranch"].(string)
+	c.Branch, ok = repository["gitbranch"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository branch")
 	}
 
-	c.gitPath, ok = repository["gitpath"].(string)
+	c.Path, ok = repository["gitpath"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository gitpath")
 	}
 
-	c.gitToken, ok = repository["token"].(string)
+	ok = len(c.GithubToken) > 0
 	if !ok {
 		return nil, errors.New("not found github repository token")
 	}
@@ -177,7 +189,7 @@ func prepareCommit(args ...string) (*Upload, error) {
 }
 
 func verifyCommit(c *Upload) error {
-	if !fileExist(c.configPath) {
+	if !utils.FileExist(c.Path) {
 		return ErrConfigNotFount
 	}
 

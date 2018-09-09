@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	ConfigFile     = "inclus.yaml"
-	GenVerionsFile = "versions.yaml"
+	ConfigFile = "inclus.yaml"
 )
 
 var (

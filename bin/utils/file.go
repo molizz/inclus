@@ -1,4 +1,4 @@
-package cmd
+package utils
 
 import (
 	"bytes"
@@ -7,17 +7,6 @@ import (
 
 	"github.com/spf13/viper"
 )
-
-type Upload struct {
-	PushURL string `yaml:"push_url"`
-	Branch  string `yaml:"branch"`
-	Path    string `yaml:"push_to"`
-}
-type Inclus struct {
-	Upload      Upload            `yaml:"upload"`
-	CloneDir    string            `yaml:"clone_dir"`
-	Definitions map[string]string `yaml:"definitions"`
-}
 
 func GetViper(cfgPath string) (*viper.Viper, error) {
 	versionCfg := viper.New()
@@ -35,10 +24,18 @@ func GetViper(cfgPath string) (*viper.Viper, error) {
 	return versionCfg, nil
 }
 
-func fileExist(path string) bool {
+func FileExist(path string) bool {
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) || info.IsDir() {
 		return false
 	}
 	return true
+}
+
+func FileCreate(file string) error {
+	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	return f.Close()
 }

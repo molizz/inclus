@@ -1,15 +1,15 @@
 upload:
   # inclus commit 可以将inclus.yml提交到该仓库
   # 在 https://github.com/settings/tokens/new 新增 access token. 需要 repo:repo_deployment 权限
-  git_push_url: https://github.com/molizz/inclus
-  git_branch: master
-  git_push_to: /inclus.yaml
+  # 将access token写入环境变量 TOKEN
+  push_url: https://github.com/molizz/inclus
+  branch: master
+  path: ./inclus.yaml
 
-
-# 仓库的默认clone地址
+# 仓库的默认clone地址, 请确保该地址已经存在
 clone_dir: /Users/moli/go-project/src/github.com/molizz/inclus/repository
 
 definitions:
-  api: 'git@github.com:BangWork/bang-api.git'
-  web: 'git@github.com:BangWork/bang-api.git'
+  api: 'git@github.com:molizz/nddos.git'
+  web: 'git@github.com:molizz/grack.git'
 

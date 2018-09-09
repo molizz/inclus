@@ -32,15 +32,18 @@ func NewClone(out io.Writer, url, dir string) *Repository {
 }
 
 func (r *Repository) Clone() error {
-	gitclone := exec.Command("git", "clone", r.Url)
-	gitclone.Stderr = r.out
-	gitclone.Dir = r.Dir
-	err := gitclone.Run()
-	if err != nil {
-		return err
+	fmt.Println("git clone ", r.Url)
+	if !r.existCloned() {
+		gitclone := exec.Command("git", "clone", r.Url)
+		gitclone.Stderr = r.out
+		gitclone.Dir = r.Dir
+		err := gitclone.Run()
+		if err != nil {
+			return err
+		}
 	}
 
-	err = r.fetch()
+	err := r.fetch()
 	if err != nil {
 		return err
 	}
@@ -48,6 +51,7 @@ func (r *Repository) Clone() error {
 }
 
 func (r *Repository) fetch() error {
+	fmt.Println("git fetch ", r.Url)
 	projectDir, err := r.ProjectDir()
 	if err != nil {
 		return err
@@ -115,15 +119,20 @@ func (r *Repository) CommitCountByTagName(tagName string) (uint, error) {
 	var stdOutBuff bytes.Buffer
 
 	total := exec.Command("git", "rev-list", tagName, "--count")
+	fmt.Println(total.Args)
+
 	total.Dir = projectDir
-	total.Stderr = &stdOutBuff
+	total.Stdout = &stdOutBuff
 	err = total.Run()
 	if err != nil {
 		r.out.Write(stdOutBuff.Bytes())
 		return 0, err
 	}
 
-	count, err := strconv.ParseUint(string(stdOutBuff.Bytes()), 10, 32)
+	countStr := strings.TrimSpace(string(stdOutBuff.Bytes()))
+	fmt.Println("Count: ", countStr)
+
+	count, err := strconv.ParseUint(countStr, 10, 32)
 	if err != nil {
 		return 0, err
 	}

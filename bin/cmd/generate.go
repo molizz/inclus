@@ -3,18 +3,38 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/molizz/inclus/bin/utils"
 	"github.com/spf13/cobra"
-	"os"
 )
+
+type RepoConfig struct {
+	CloneDir    string            `yaml:"clone_dir"`
+	Definitions map[string]string `yaml:"definitions"`
+}
 
 type version = string
 type defineName = string
 
-var inclusCfg *Inclus
+var repoCfg *RepoConfig
 
 func init() {
 	RootCmd.AddCommand(versionCmd)
+
+	cfg, err := utils.GetViper(ConfigFile)
+	if err != nil {
+		panic(err)
+	}
+
+	repoCfg = new(RepoConfig)
+	repoCfg.Definitions = make(map[string]string)
+	repoCfg.CloneDir = cfg.GetString("clone_dir")
+	defs := cfg.GetStringMap("definitions")
+	for k, v := range defs {
+		repoCfg.Definitions[k] = v.(string)
+	}
 }
 
 var versionCmd = &cobra.Command{
@@ -29,7 +49,7 @@ var versionCmd = &cobra.Command{
 		}
 
 		// 加载inclus.yaml
-		config, err := GetViper(ConfigFile)
+		config, err := utils.GetViper(ConfigFile)
 		if err != nil {
 			return err
 		}
@@ -44,7 +64,7 @@ var versionCmd = &cobra.Command{
 		// clone 仓库 & 统计commit数
 		versionWithCommitTotalMap := make(map[version]uint)
 		for name, ver := range argsMap {
-			cloner := utils.NewClone(os.Stderr, inclusCfg.Definitions[name], inclusCfg.CloneDir)
+			cloner := utils.NewClone(os.Stderr, repoCfg.Definitions[name], repoCfg.CloneDir)
 			err = cloner.Clone()
 			if err != nil {
 				return err
@@ -55,6 +75,27 @@ var versionCmd = &cobra.Command{
 				return err
 			}
 			versionWithCommitTotalMap[ver] = t
+		}
+
+		// 生成版本号(v100.12.123)
+		newVer := make([]string, 0)
+		for _, ver := range argsMap {
+			verNum := versionWithCommitTotalMap[ver]
+			newVer = append(newVer, fmt.Sprintf("%d", verNum))
+		}
+		newVerStr := "v" + strings.Join(newVer, ".")
+
+		// 保存
+		newVerMap := make(map[string]map[string]string)
+		for name, ver := range argsMap {
+			if newVerMap[newVerStr] == nil {
+				newVerMap[newVerStr] = make(map[string]string)
+			}
+			newVerMap[newVerStr][name] = ver
+		}
+		err = utils.Ver.AddVer(newVerMap).Save()
+		if err != nil {
+			return err
 		}
 
 		return nil
