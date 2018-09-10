@@ -23,3 +23,9 @@ TOKEN=xxxxxx inclus u
 ```
 
 将上传到github, token为github的密钥
+
+#### 下载releases
+
+```
+TOKEN=xxxxx inclus d v20.100.10
+```

@@ -31,11 +31,15 @@ const (
 	clientTimeout = 10 * time.Second
 )
 
+const (
+	VerionsFile = "versions.yaml"
+)
+
 var (
 	ctx = context.Background()
 )
 
-// 目前只支持github
+// 只支持github
 
 func init() {
 	RootCmd.AddCommand(commitCmd)
@@ -43,8 +47,8 @@ func init() {
 
 var commitCmd = &cobra.Command{
 	Use:   "u",
-	Short: "传入版本号",
-	Long:  "传入配置文件, 默认使用当前目录的 " + ConfigFile,
+	Short: "上传version.yaml文件",
+	Long:  "将自动上传versions.yaml文件到git仓库",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config, err := prepareCommit(args...)
 		if err != nil {
@@ -163,7 +167,7 @@ func prepareCommit(args ...string) (*Upload, error) {
 	if len(args) > 0 {
 		c.Path = args[0]
 	} else {
-		c.Path = ConfigFile
+		c.Path = VerionsFile
 	}
 
 	c.GithubToken = os.Getenv("TOKEN")
