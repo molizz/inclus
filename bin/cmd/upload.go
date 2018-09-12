@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -33,6 +32,7 @@ const (
 
 const (
 	VerionsFile = "versions.yaml"
+	GithubToken = "TOKEN"
 )
 
 var (
@@ -86,10 +86,6 @@ func push(c *Upload) error {
 	if err != nil {
 		return err
 	}
-	// contentEncode, err := encodeBase64(content)
-	// if err != nil {
-	// 	return err
-	// }
 
 	var shaBuff bytes.Buffer
 	shaBuff.Write([]byte("blob"))
@@ -126,17 +122,6 @@ func push(c *Upload) error {
 	}
 }
 
-func encodeBase64(src []byte) (dst []byte, err error) {
-	length := len(src)
-	if length == 0 {
-		return nil, fmt.Errorf("encode base64 is error: src length is %d", length)
-	}
-
-	dst = make([]byte, base64.StdEncoding.EncodedLen(length))
-	base64.StdEncoding.Encode(dst, src)
-	return
-}
-
 func (c *Upload) commitContent() ([]byte, error) {
 	content, err := ioutil.ReadFile(c.Path)
 	if err != nil {
@@ -170,15 +155,15 @@ func prepareCommit(args ...string) (*Upload, error) {
 		c.Path = VerionsFile
 	}
 
-	c.GithubToken = os.Getenv("TOKEN")
+	c.GithubToken = os.Getenv(GithubToken)
 
-	v, err := utils.GetViper(c.Path)
+	versionsCfg, err := utils.GetViper(c.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	var ok bool
-	repository := v.Get("upload").(map[string]interface{})
+	repository := versionsCfg.Get("upload").(map[string]interface{})
 	c.PushURL, ok = repository["push_url"].(string)
 	if !ok {
 		return nil, errors.New("not found github repository url")

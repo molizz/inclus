@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -99,13 +98,12 @@ func (r *Repository) existCloned() bool {
 // git@github.com:xxx/abc-123.git
 // result abc-123
 func (r *Repository) projectName() (string, error) {
-	splitStrs := strings.Split(r.Url, "/")
-	strsLen := len(splitStrs)
-	if strsLen == 0 {
-		return "", errors.New("确认这是git地址吗? " + r.Url)
+	cloneURI, err := ParseCloneURL(r.Url)
+	if err != nil {
+		return "", err
 	}
-	incompleteStr := splitStrs[strsLen-1]
-	return strings.TrimRight(incompleteStr, ".git"), nil
+
+	return cloneURI.RepoName, nil
 }
 
 //git rev-list HEAD --count

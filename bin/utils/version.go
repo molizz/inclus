@@ -12,7 +12,7 @@ var Ver *Version
 
 func init() {
 	Ver = new(Version)
-	Ver.versions = make(map[string]map[string]string)
+	Ver.Versions = make(map[string]map[string]string)
 	err := Ver.Prepare()
 	if err != nil {
 		fmt.Println(err)
@@ -20,7 +20,7 @@ func init() {
 }
 
 type Version struct {
-	versions map[string]map[string]string
+	Versions map[string]map[string]string
 }
 
 func (v *Version) Prepare() error {
@@ -43,14 +43,14 @@ func (v *Version) Prepare() error {
 		for name, ver := range nameWithVer.(map[string]interface{}) {
 			temp[name] = fmt.Sprintf("%v", ver)
 		}
-		v.versions[fullVer] = temp
+		v.Versions[fullVer] = temp
 	}
 	return nil
 }
 
 func (v *Version) AddVer(ver map[string]map[string]string) *Version {
 	for name, version := range ver {
-		v.versions[name] = version
+		v.Versions[name] = version
 	}
 	return v
 }
@@ -63,7 +63,7 @@ func (v *Version) Save() error {
 
 	cfg.SetConfigFile(VerionsFile)
 
-	cfg.Set("versions", v.versions)
+	cfg.Set("versions", v.Versions)
 	err = cfg.WriteConfig()
 	if err != nil {
 		return err

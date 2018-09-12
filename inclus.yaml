@@ -9,6 +9,9 @@ upload:
 # 仓库的默认clone地址, 请确保该地址已经存在
 clone_dir: /Users/moli/go-project/src/github.com/molizz/inclus/repository
 
+# 保存版本到该目录
+releases_dir: /Users/moli/go-project/src/github.com/molizz/inclus/releases
+
 definitions:
   api: 'git@github.com:molizz/nddos.git'
   web: 'git@github.com:molizz/grack.git'

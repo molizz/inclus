@@ -23,15 +23,10 @@ var repoCfg *RepoConfig
 func init() {
 	RootCmd.AddCommand(versionCmd)
 
-	cfg, err := utils.GetViper(ConfigFile)
-	if err != nil {
-		panic(err)
-	}
-
 	repoCfg = new(RepoConfig)
 	repoCfg.Definitions = make(map[string]string)
-	repoCfg.CloneDir = cfg.GetString("clone_dir")
-	defs := cfg.GetStringMap("definitions")
+	repoCfg.CloneDir = config.GetString("clone_dir")
+	defs := config.GetStringMap("definitions")
 	for k, v := range defs {
 		repoCfg.Definitions[k] = v.(string)
 	}
@@ -44,12 +39,6 @@ var versionCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// 格式化参数
 		argsMap, err := parseArgs(args)
-		if err != nil {
-			return err
-		}
-
-		// 加载inclus.yaml
-		config, err := utils.GetViper(ConfigFile)
 		if err != nil {
 			return err
 		}

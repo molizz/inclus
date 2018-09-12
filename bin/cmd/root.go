@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/bangwork/bang-api/app/utils/errors"
+	"github.com/molizz/inclus/bin/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -14,6 +16,16 @@ const (
 
 var (
 	ErrConfigNotFount = errors.New("inclus file is not found")
+)
+
+var (
+	config = func() *viper.Viper {
+		c, err := utils.GetViper(ConfigFile)
+		if err != nil {
+			panic(err)
+		}
+		return c
+	}()
 )
 
 var RootCmd = &cobra.Command{
